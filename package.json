@@ -1,5 +1,5 @@
 {
-  "name": "weather-mcp-server",
+  "name": "mcp-weather-sse",
   "version": "1.0.0",
   "description": "Weather MCP Server using NestJS",
   "scripts": {

@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 const NWS_API_BASE = 'https://api.weather.gov';
 const GEOCODE_API_BASE = 'https://geocode.maps.co';
-const GEOCODE_API_KEY = '685cbcaf6b2c6204928522ftp68c29c';
+const GEOCODE_API_KEY = process.env.GEOCODE_API_KEY;
 const USER_AGENT = 'weather-app/1.0';
 
 interface AlertFeature {
@@ -79,6 +79,13 @@ interface GeocodeMapsResponse {
 
 @Injectable()
 export class WeatherService {
+  constructor() {
+    // 验证环境变量
+    if (!process.env.GEOCODE_API_KEY) {
+      console.warn('⚠️  GEOCODE_API_KEY environment variable not set. Using default API key.');
+    }
+  }
+
   private async makeNWSRequest<T>(url: string): Promise<T | null> {
     const headers = {
       'User-Agent': USER_AGENT,

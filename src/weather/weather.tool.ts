@@ -34,7 +34,7 @@ export class WeatherTool {
     name: 'get-forecast-by-city',
     description: 'Get weather forecast for a city by name using geocoding and National Weather Service API',
     parameters: z.object({
-      city: z.string().min(1).describe('City name (e.g. New York, Los Angeles, London, Tokyo)'),
+      city: z.string().min(1).describe('City name (e.g. New York, Los Angeles)'),
       state: z.string().length(2).optional().describe('Two-letter state code (optional, e.g. CA, NY)'),
     }),
   })

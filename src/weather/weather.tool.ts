@@ -9,9 +9,9 @@ export class WeatherTool {
 
   @Tool({
     name: 'get-alerts',
-    description: '获取某个州的天气警报',
+    description: 'Get weather alerts for a given state',
     parameters: z.object({
-      state: z.string().length(2).describe('两个字母的州代码（例如 CA、NY）'),
+      state: z.string().length(2).describe('Two-letter state code (e.g. CA, NY)'),
     }),
   })
   async getAlerts({ state }: { state: string }) {
@@ -20,10 +20,10 @@ export class WeatherTool {
 
   @Tool({
     name: 'get-forecast',
-    description: '获取某个位置的天气预报',
+    description: 'Get weather forecast for a given location',
     parameters: z.object({
-      latitude: z.number().min(-90).max(90).describe('位置的纬度'),
-      longitude: z.number().min(-180).max(180).describe('位置的经度'),
+      latitude: z.number().min(-90).max(90).describe('Latitude of the location'),
+      longitude: z.number().min(-180).max(180).describe('Longitude of the location'),
     }),
   })
   async getForecast({ latitude, longitude }: { latitude: number; longitude: number }) {

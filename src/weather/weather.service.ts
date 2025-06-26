@@ -81,7 +81,7 @@ export class WeatherService {
         content: [
           {
             type: 'text',
-            text: '未能检索警报数据',
+            text: 'Failed to retrieve alerts data',
           },
         ],
       };

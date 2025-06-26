@@ -16,7 +16,7 @@ interface AlertFeature {
   };
 }
 
-interface ForecastPeriod {
+export interface ForecastPeriod {
   name?: string;
   temperature?: number;
   temperatureUnit?: string;
@@ -82,14 +82,16 @@ export class WeatherService {
   constructor() {
     // 验证环境变量
     if (!process.env.GEOCODE_API_KEY) {
-      console.warn('⚠️  GEOCODE_API_KEY environment variable not set. Using default API key.');
+      console.warn(
+        '⚠️  GEOCODE_API_KEY environment variable not set. Using default API key.',
+      );
     }
   }
 
   private async makeNWSRequest<T>(url: string): Promise<T | null> {
     const headers = {
       'User-Agent': USER_AGENT,
-      'Accept': 'application/geo+json',
+      Accept: 'application/geo+json',
     };
 
     try {
@@ -129,6 +131,16 @@ export class WeatherService {
     ].join('\n');
   }
 
+  private formatAlertToJson(feature: AlertFeature): AlertFeature['properties'] {
+    return {
+      event: feature.properties.event,
+      areaDesc: feature.properties.areaDesc,
+      severity: feature.properties.severity,
+      status: feature.properties.status,
+      headline: feature.properties.headline,
+    }
+  }
+
   private formatForecastPeriod(period: ForecastPeriod): string {
     return [
       `${period.name || 'Unknown'}:`,
@@ -137,7 +149,21 @@ export class WeatherService {
       `Forecast: ${period.shortForecast || 'No forecast available'}`,
       period.detailedForecast ? `Details: ${period.detailedForecast}` : '',
       '---',
-    ].filter(Boolean).join('\n');
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  private formatForecast(period: ForecastPeriod): ForecastPeriod {
+    return {
+      name: period.name,
+      temperature: period.temperature,
+      temperatureUnit: period.temperatureUnit,
+      windSpeed: period.windSpeed,
+      windDirection: period.windDirection,
+      shortForecast: period.shortForecast,
+      detailedForecast: period.detailedForecast,
+    }
   }
 
   async getAlerts(state: string) {
@@ -178,6 +204,9 @@ export class WeatherService {
           text: alertsText,
         },
       ],
+      structuredContent: {
+        alerts: features.map(this.formatAlertToJson)
+      }
     };
   }
 
@@ -208,7 +237,8 @@ export class WeatherService {
       };
     }
 
-    const forecastData = await this.makeNWSRequest<ForecastResponse>(forecastUrl);
+    const forecastData =
+      await this.makeNWSRequest<ForecastResponse>(forecastUrl);
     if (!forecastData) {
       return {
         content: [
@@ -242,6 +272,9 @@ export class WeatherService {
           text: forecastText,
         },
       ],
+      structuredContent: {
+        periods: periods.map(this.formatForecast),
+      },
     };
   }
 
@@ -249,8 +282,9 @@ export class WeatherService {
     // 首先尝试使用 geocode.maps.co 获取坐标
     const geocodeQuery = state ? `${city}, ${state}` : city;
     const geocodeUrl = `${GEOCODE_API_BASE}/search?q=${encodeURIComponent(geocodeQuery)}&api_key=${GEOCODE_API_KEY}`;
-    
-    const geocodeData = await this.makeGeocodeRequest<GeocodeMapsResponse[]>(geocodeUrl);
+
+    const geocodeData =
+      await this.makeGeocodeRequest<GeocodeMapsResponse[]>(geocodeUrl);
 
     if (geocodeData && geocodeData.length > 0) {
       // 使用 geocode.maps.co 的结果
@@ -260,9 +294,10 @@ export class WeatherService {
       const displayName = location.display_name;
 
       // 检查是否是美国地区（NWS API 只支持美国）
-      const isUSLocation = displayName.includes('United States') || 
-                          displayName.includes('USA') || 
-                          displayName.includes('US');
+      const isUSLocation =
+        displayName.includes('United States') ||
+        displayName.includes('USA') ||
+        displayName.includes('US');
 
       if (isUSLocation) {
         // 使用 NWS API 获取天气预报
@@ -276,6 +311,9 @@ export class WeatherService {
               text: `Location found: ${displayName}\nCoordinates: ${latitude}, ${longitude}\n\nNote: Weather forecast is only available for US locations through the National Weather Service API. For international locations, you may need to use a different weather service.`,
             },
           ],
+          structuredContent: {
+            periods: [],
+          },
         };
       }
     }
@@ -288,9 +326,14 @@ export class WeatherService {
     nwsGeocodingQuery += ', USA';
 
     const nwsGeocodingUrl = `${NWS_API_BASE}/geocoding/addresses?q=${encodeURIComponent(nwsGeocodingQuery)}`;
-    const nwsGeocodingData = await this.makeNWSRequest<GeocodingResponse>(nwsGeocodingUrl);
+    const nwsGeocodingData =
+      await this.makeNWSRequest<GeocodingResponse>(nwsGeocodingUrl);
 
-    if (!nwsGeocodingData || !nwsGeocodingData.features || nwsGeocodingData.features.length === 0) {
+    if (
+      !nwsGeocodingData ||
+      !nwsGeocodingData.features ||
+      nwsGeocodingData.features.length === 0
+    ) {
       return {
         content: [
           {
@@ -334,7 +377,8 @@ export class WeatherService {
       };
     }
 
-    const forecastData = await this.makeNWSRequest<ForecastResponse>(forecastUrl);
+    const forecastData =
+      await this.makeNWSRequest<ForecastResponse>(forecastUrl);
     if (!forecastData) {
       return {
         content: [
@@ -368,14 +412,18 @@ export class WeatherService {
           text: forecastText,
         },
       ],
+      structuredContent: {
+        periods: periods.map(this.formatForecast),
+      },
     };
   }
 
   async getCoordinatesByCity(city: string, state?: string) {
     const geocodeQuery = state ? `${city}, ${state}` : city;
     const geocodeUrl = `${GEOCODE_API_BASE}/search?q=${encodeURIComponent(geocodeQuery)}&api_key=${GEOCODE_API_KEY}`;
-    
-    const geocodeData = await this.makeGeocodeRequest<GeocodeMapsResponse[]>(geocodeUrl);
+
+    const geocodeData =
+      await this.makeGeocodeRequest<GeocodeMapsResponse[]>(geocodeUrl);
 
     if (!geocodeData || geocodeData.length === 0) {
       return {
@@ -400,6 +448,11 @@ export class WeatherService {
           text: `Location: ${displayName}\nCoordinates: ${latitude}, ${longitude}`,
         },
       ],
+      structuredContent: {
+        name: displayName,
+        latitude,
+        longitude,
+      },
     };
   }
-} 
+}

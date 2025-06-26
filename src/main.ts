@@ -7,4 +7,4 @@ async function bootstrap() {
   console.log('Weather MCP Server is running on http://localhost:3000');
 }
 
-bootstrap(); 
+bootstrap();
